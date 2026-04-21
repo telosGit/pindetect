@@ -68,6 +68,7 @@
 
   // --- Countdown state ---
   let countdownActive = false;
+  let countdownCompleted = false;  // Track if countdown has completed for current pinned state
   let countdownValue = COUNTDOWN_INITIAL_VALUE;
   let countdownInterval = null;
 
@@ -84,11 +85,11 @@
                   : score >= 2 ? 'MAYBE_PINNED'
                   : 'LIKELY_NOT_PINNED';
     
-    // If pinned and countdown not active, start countdown
-    if (verdict === 'LIKELY_PINNED' && !countdownActive) {
+    // If pinned and countdown not active or completed, start countdown
+    if (verdict === 'LIKELY_PINNED' && !countdownActive && !countdownCompleted) {
       startCountdown();
-    } else if (verdict !== 'LIKELY_PINNED' && countdownActive) {
-      // If unpinned, stop countdown
+    } else if (verdict !== 'LIKELY_PINNED' && (countdownActive || countdownCompleted)) {
+      // If unpinned, stop countdown and reset completed flag
       stopCountdown();
     }
     
@@ -106,6 +107,7 @@
     }
     
     countdownActive = true;
+    countdownCompleted = false;
     countdownValue = COUNTDOWN_INITIAL_VALUE;
     document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
     
@@ -115,7 +117,8 @@
         document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
       } else {
         document.getElementById('status').textContent = 'Tab is pinned!';
-        countdownActive = false;  // Reset flag so countdown can restart
+        countdownActive = false;  // Countdown is no longer running
+        countdownCompleted = true;  // Mark as completed for this pinned state
         countdownValue = COUNTDOWN_INITIAL_VALUE;  // Reset value for next countdown
         clearInterval(countdownInterval);
         countdownInterval = null;
@@ -125,6 +128,7 @@
 
   function stopCountdown() {
     countdownActive = false;
+    countdownCompleted = false;  // Reset completed flag for next pin detection
     countdownValue = COUNTDOWN_INITIAL_VALUE;  // Reset value for clean state
     if (countdownInterval) {
       clearInterval(countdownInterval);
