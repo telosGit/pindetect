@@ -5,6 +5,11 @@
 
   const log = [];
   let initialSettled = false;
+  
+  // Configuration constants
+  const COUNTDOWN_INITIAL_VALUE = 3;
+  const COUNTDOWN_TICK_MS = 1000;
+  const PROBE_INTERVAL_MS = 1000;
 
   // --- Signal 1: favicon re-fetch burst ---
   navigator.serviceWorker.addEventListener('message', ev => {
@@ -61,6 +66,12 @@
     return window.outerHeight - window.innerHeight;
   }
 
+  // --- Countdown state ---
+  let countdownActive = false;
+  let countdownCompleted = false;  // Track if countdown has completed for current pinned state
+  let countdownValue = COUNTDOWN_INITIAL_VALUE;
+  let countdownInterval = null;
+
   // --- Combine ---
   function evaluate(trigger) {
     // Heuristic scoring
@@ -73,16 +84,63 @@
     const verdict = score >= 3 ? 'LIKELY_PINNED'
                   : score >= 2 ? 'MAYBE_PINNED'
                   : 'LIKELY_NOT_PINNED';
-    document.getElementById('status').textContent =
-      `${verdict} (score ${score}, throttle ${throttleScore})`;
+    
+    // If pinned and countdown not active or completed, start countdown
+    if (verdict === 'LIKELY_PINNED' && !countdownActive && !countdownCompleted) {
+      startCountdown();
+    } else if (verdict !== 'LIKELY_PINNED' && (countdownActive || countdownCompleted)) {
+      // If unpinned, stop countdown and reset completed flag
+      stopCountdown();
+    }
+    
+    if (!countdownActive) {
+      document.getElementById('status').textContent =
+        `${verdict} (score ${score}, throttle ${throttleScore})`;
+    }
     window.dispatchEvent(new CustomEvent('pinstate', { detail: { verdict, score }}));
+  }
+
+  function startCountdown() {
+    // Clear any existing countdown to prevent memory leaks
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+    
+    countdownActive = true;
+    countdownCompleted = false;
+    countdownValue = COUNTDOWN_INITIAL_VALUE;
+    document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
+    
+    countdownInterval = setInterval(() => {
+      countdownValue--;
+      if (countdownValue > 0) {
+        document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
+      } else {
+        document.getElementById('status').textContent = 'Tab is pinned!';
+        countdownActive = false;  // Countdown is no longer running
+        countdownCompleted = true;  // Mark as completed for this pinned state
+        countdownValue = COUNTDOWN_INITIAL_VALUE;  // Reset value for next countdown
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }, COUNTDOWN_TICK_MS);
+  }
+
+  function stopCountdown() {
+    countdownActive = false;
+    countdownCompleted = false;  // Reset completed flag for next pin detection
+    countdownValue = COUNTDOWN_INITIAL_VALUE;  // Reset value for clean state
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
   }
 
   // Probe periodically so state changes get caught even if the user
   // never interacts. Chrome will only actually hit the SW when the
   // href changes AND the browser decides to refresh the icon — which
   // it reliably does on pin/unpin.
-  setInterval(probe, 5000);
+  setInterval(probe, PROBE_INTERVAL_MS);  // Check every 1 second
 
   // Initial verdict
   setTimeout(() => evaluate('init'), 3000);
