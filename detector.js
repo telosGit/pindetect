@@ -1,6 +1,6 @@
 (async () => {
   // Register SW
-  await navigator.serviceWorker.register('/sw.js');
+  await navigator.serviceWorker.register('/pindetect/sw.js');
   await navigator.serviceWorker.ready;
 
   const log = [];
