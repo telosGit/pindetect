@@ -8,6 +8,7 @@
   
   // Configuration constants
   const COUNTDOWN_INITIAL_VALUE = 3;
+  const COUNTDOWN_TICK_MS = 1000;
   const PROBE_INTERVAL_MS = 1000;
 
   // --- Signal 1: favicon re-fetch burst ---
@@ -119,7 +120,7 @@
         clearInterval(countdownInterval);
         countdownInterval = null;
       }
-    }, 1000);
+    }, COUNTDOWN_TICK_MS);
   }
 
   function stopCountdown() {
