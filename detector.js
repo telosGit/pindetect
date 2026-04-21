@@ -5,6 +5,10 @@
 
   const log = [];
   let initialSettled = false;
+  
+  // Configuration constants
+  const COUNTDOWN_INITIAL_VALUE = 3;
+  const PROBE_INTERVAL_MS = 1000;
 
   // --- Signal 1: favicon re-fetch burst ---
   navigator.serviceWorker.addEventListener('message', ev => {
@@ -63,7 +67,7 @@
 
   // --- Countdown state ---
   let countdownActive = false;
-  let countdownValue = 3;
+  let countdownValue = COUNTDOWN_INITIAL_VALUE;
   let countdownInterval = null;
 
   // --- Combine ---
@@ -101,7 +105,7 @@
     }
     
     countdownActive = true;
-    countdownValue = 3;
+    countdownValue = COUNTDOWN_INITIAL_VALUE;
     document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
     
     countdownInterval = setInterval(() => {
@@ -129,7 +133,7 @@
   // never interacts. Chrome will only actually hit the SW when the
   // href changes AND the browser decides to refresh the icon — which
   // it reliably does on pin/unpin.
-  setInterval(probe, 1000);  // Check every 1 second
+  setInterval(probe, PROBE_INTERVAL_MS);  // Check every 1 second
 
   // Initial verdict
   setTimeout(() => evaluate('init'), 3000);
