@@ -115,6 +115,7 @@
       } else {
         document.getElementById('status').textContent = 'Tab is pinned!';
         countdownActive = false;  // Reset flag so countdown can restart
+        countdownValue = COUNTDOWN_INITIAL_VALUE;  // Reset value for next countdown
         clearInterval(countdownInterval);
         countdownInterval = null;
       }
@@ -123,6 +124,7 @@
 
   function stopCountdown() {
     countdownActive = false;
+    countdownValue = COUNTDOWN_INITIAL_VALUE;  // Reset value for clean state
     if (countdownInterval) {
       clearInterval(countdownInterval);
       countdownInterval = null;
