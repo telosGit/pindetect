@@ -95,6 +95,11 @@
   }
 
   function startCountdown() {
+    // Clear any existing countdown to prevent memory leaks
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
+    
     countdownActive = true;
     countdownValue = 3;
     document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
@@ -105,7 +110,9 @@
         document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
       } else {
         document.getElementById('status').textContent = 'Tab is pinned!';
+        countdownActive = false;  // Reset flag so countdown can restart
         clearInterval(countdownInterval);
+        countdownInterval = null;
       }
     }, 1000);
   }
