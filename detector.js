@@ -61,6 +61,11 @@
     return window.outerHeight - window.innerHeight;
   }
 
+  // --- Countdown state ---
+  let countdownActive = false;
+  let countdownValue = 3;
+  let countdownInterval = null;
+
   // --- Combine ---
   function evaluate(trigger) {
     // Heuristic scoring
@@ -73,16 +78,51 @@
     const verdict = score >= 3 ? 'LIKELY_PINNED'
                   : score >= 2 ? 'MAYBE_PINNED'
                   : 'LIKELY_NOT_PINNED';
-    document.getElementById('status').textContent =
-      `${verdict} (score ${score}, throttle ${throttleScore})`;
+    
+    // If pinned and countdown not active, start countdown
+    if (verdict === 'LIKELY_PINNED' && !countdownActive) {
+      startCountdown();
+    } else if (verdict !== 'LIKELY_PINNED' && countdownActive) {
+      // If unpinned, stop countdown
+      stopCountdown();
+    }
+    
+    if (!countdownActive) {
+      document.getElementById('status').textContent =
+        `${verdict} (score ${score}, throttle ${throttleScore})`;
+    }
     window.dispatchEvent(new CustomEvent('pinstate', { detail: { verdict, score }}));
+  }
+
+  function startCountdown() {
+    countdownActive = true;
+    countdownValue = 3;
+    document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
+    
+    countdownInterval = setInterval(() => {
+      countdownValue--;
+      if (countdownValue > 0) {
+        document.getElementById('status').textContent = `Tab is pinned! Countdown: ${countdownValue}`;
+      } else {
+        document.getElementById('status').textContent = 'Tab is pinned!';
+        clearInterval(countdownInterval);
+      }
+    }, 1000);
+  }
+
+  function stopCountdown() {
+    countdownActive = false;
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
   }
 
   // Probe periodically so state changes get caught even if the user
   // never interacts. Chrome will only actually hit the SW when the
   // href changes AND the browser decides to refresh the icon — which
   // it reliably does on pin/unpin.
-  setInterval(probe, 5000);
+  setInterval(probe, 1000);  // Check every 1 second
 
   // Initial verdict
   setTimeout(() => evaluate('init'), 3000);
